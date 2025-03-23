@@ -1,0 +1,291 @@
+---
+title: "birthwt_hypothesis_test"
+format: docx
+editor: visual
+---
+
+## Contrastes de hipótesis en R: birthwt
+
+Los datos con los que trabajararemos pertenecen al conjunto de datos birthwt, y están disponibles en MASS. Este conjunto de datos contiene datos sobre los factores de riesgo asociados con el bajo peso en el nacimiento. Su estructura es la siguiente:
+
+-   Low: indicador de peso al nacer inferior a 2,5 kg.
+-   Age: edad de la madre en años.
+-   Lwt: peso de la madre en libras en el último período menstrual.
+-   Race: raza de la madre (1 = blanca, 2 = negra, 3 = otra).
+-   Smoke: estado de tabaquismo durante el embarazo.
+-   Ptl: número de trabajos prematuros previos.
+-   Ht: historia de hipertensión.
+-   Ui: presencia de irritabilidad uterina.
+-   Ftv: número de visitas al médico durante el primer trimestre.
+-   Bwt: peso al nacer en gramos.
+
+Se parte de las hipótesis:
+
+Ho: La media de los pesos de los recién nacidos no es menor a la media (2500) si las madres son fumadoras durante el embarazo. H1: La media de los pesos de los recién nacidos es menor a la media (2500) si las madres son fumadoras durante el embarazo.
+
+Se busca:
+
+1.  Tratar los datos de manera que se puedan realizar test con ellos.
+
+Primero de todo procedemos a cargar los datos y observar la estructura de los mismos.
+
+```{r}
+# Cargar los paquetes necesarios
+
+library(MASS) 
+library(ggplot2) 
+library(dplyr)
+
+# Cargar el conjunto de datos birthwt
+
+data("birthwt")
+
+# Estructura del conjunto de datos
+
+str(birthwt)
+```
+
+2.  Realizar t-test con el peso de los recién nacidos, suponiendo que la media son 2500.
+
+Considerando que la media del peso de los recién nacidos son 2500 gramos, realizamos un t-test con aquellos casos en los que la madre ha sido fumadora durante el embarazo. Dicho test lo realizamos para observar con que hipotesis de las mencionadas anteriormente nos quedaríamos.
+
+Observando el resultado obtenido, en lo primero que nos fijamos es en el p-valor el cual es mucho mayor que 0.05 y, por lo tanto, no tenemos la evidencia suficiente como para rechazar nuestra hipotesis nula (H0) y concluir que la media de los recién nacidos de las madres fumadoras sea menor de 2500 gramos.
+
+Además del valor de p, dicha prueba nos muestra diferentes estadísticos que nos aportan mayor información para tomar la decisión anterior. El primero es el valor del t-estadístico el cual es positivo y ya nos sugiere que la media muestral estará por encima de la media supuesta. El segundo es el valor de la media muestral (2771,919) que ya podemos ver como está por encima del valor de mu. Y, por último, el intervalo de confianza del 95% nos marca que el valor de la media muestral está dentro de este rango.
+
+```{r}
+# Realizar un t-test con el peso de los recién nacidos, suponiendo que la media es 2500
+
+# Suponemos que las madres son fumadoras durante el embarazo
+
+smokers <- subset(birthwt, smoke == 1) 
+t_test_result <- t.test(smokers$bwt, mu = 2500, alternative = "less")
+
+# Mostrar el resultado del t-test
+print(t_test_result)
+
+```
+
+3.  Crear un diagrama de caja que muestre cómo varía el peso de nacimiento según el estado de tabaquismo.
+
+Si analizamos el diagrama obtenido a partir del filtrado de los datos en dos grupos, podemos observar ya una primera diferencia con el valor de la mediana, que obtiene valores por encima de los 3000 gramos para las madres no fumadoras y, por debajo dee este mismo valor para las madres fumadoras. Esto nos sugiere que los recién nacidos por parte de las madres no fumadoras tienden a nacer con un peso mayor. Esta conclusión coge todavía una mayor fuerza si observamos la caja central, que nos representa el rango intercuartílico entre el 25% y 75% de los datos. Como bien se observa a primera vista, presentan una distribución más amplia y un promedio más elevados respecto a la caja de las madres fumadoras, que presentan una distribución más concentrada y una menor variabilidad.
+
+Por lo tanto, este gráfico nos indica que el tabaquismo puede guardar relación con un menor peso en lo recién nacidos. Así que hay que plantearse dicha hipotesis y tratar de demostrarla mediante pruebas estadísticas.
+
+```{r}
+
+# Instalar los paquetes necesarios si no están ya instalados
+if (!requireNamespace("ggplot2", quietly = TRUE)) {
+  install.packages("ggplot2")
+}
+if (!requireNamespace("dplyr", quietly = TRUE)) {
+  install.packages("dplyr")
+}
+
+# Crear el diagrama de caja que muestra cómo varía el peso de nacimiento según el estado de tabaquismo
+boxplot(bwt ~ smoke, data = birthwt,
+        main = "Peso al Nacer según el Estado de Tabaquismo",
+        xlab = "Estado de Tabaquismo",
+        ylab = "Peso al Nacer (gramos)",
+        col = c("lightblue", "pink"),
+        names = c("No Fumadora", "Fumadora"))
+
+
+
+```
+
+4.  Evaluar ahora si esta diferencia es significativa. Usamos para ello t-test y creamos los gráficos de densidad.
+
+Cómo bien hemos comentado en el cierre del apartado anterior, con tal de demostrar esa hipotesis tenemos que evaluarlo con un t-test para poder afirmarla con la suficiente evidencia. Para ello, utilizamos un t-test con dos muestras poblacionales.
+
+Esta prueba nos compara ambas medias de los dos grupos y evalua si dicha diferencia es significativa como para afirmar que existen diferencias entre ambos grupos. A simple vista podemos ver como la media de los recién nacidos de madres no fumadoras es superior al de las madres fumadoras. Partiendo de estas dos medias se formulan dos hipotesis: la primera, es la hipotesis nula (H0) que afirma que no existen diferencias significativas en ambos grupos; la segunda, es la hipotesis alternativa (H1), que afirma que las medias entre ambos grupos es diferente. Con tal de decidir que hipotesis descartar, tenemos diferentes valores estadísticos que nos dan información. El más evidente es el valor de p, inferior a 0,05 lo que nos indica que existe suficiente evidencia como para rechazar la hipótesis nula (H0), y por lo tanto afirmar que existen diferencias significativas entre ambos grupos analizados. Si observamos los demás valores estadísticos, podemos ver como a diferencia del test realizado anteriormente, aquí el valor de t es negativo y nos sugiere que el valor de la media del primer grupo es inferior a la del segundo. Y, el intervalo de confianza obtenemos un rango que no contiene el 0, lo que también sugiere una diferencia estadísticamente significativa, ya que la difencia entre ambas medias no es igual a 0, que es un supuesto de la hipotesis alternativa. Por lo tanto, podemos evidenciar como existen diferencias significativas entre los dos grupos y, que, los recién nacidos de las madres no fumadoras presentan un peso mayor respecto al grupo de las madres fumadoras.
+
+Además de presentar dicho analisis del resultado del t-test, también se realiza un gráfico de densidades para comparar ambas distribuciones. Lo que primero salta a la vista es el desplazamiento hacia la derecha de los datos del grupo de no fumadoras, y que nos indica que los pesos de dicho grupo son mayores respecto del otro grupo. Un indicativo más que sigue dando fuerza a nuestra hipotesis es la ubicación de los picos de ambas distribuciones, siendo el de fumadoras más alto pero desplazado hacia la izquierda respecto al otro grupo. También como hemos observado en el boxplot anterior, podemos vere nuevamente como la distribución de las no fumadoras es más amplia, y nos indica una mayor variabilidad entre los datos. En cambio, la distribución de los datos del grupo de fumadoras es más estrecha y concentrada alrededor de valores más bajos del peso.
+
+```{r}
+# Evaluar si la diferencia en el peso de nacimiento es significativa utilizando un t-test
+non_smokers <- subset(birthwt, smoke==0)
+t_test_result_difference_bwt <- t.test(smokers$bwt, non_smokers$bwt)
+print(t_test_result_difference_bwt)
+
+# Crear un gráfico de densidad para comparar las distribuciones
+birthwt$smoke <- factor(birthwt$smoke, levels = c(0, 1), labels = c("No Fumadora", "Fumadora"))
+
+ggplot(birthwt, aes(x = bwt, color = smoke, fill = smoke)) +
+  geom_density(alpha = 0.5) +
+  scale_color_manual(values = c("blue", "red"), labels = c("No Fumadora", "Fumadora")) +
+  scale_fill_manual(values = c("blue", "red"), labels = c("No Fumadora", "Fumadora")) +
+  labs(
+    title = "Distribución del Peso al Nacer según el Estado de Tabaquismo",
+    x = "Peso al Nacer (gramos)",
+    y = "Densidad",
+    color = "Estado de Tabaquismo",
+    fill = "Estado de Tabaquismo"
+  ) +
+  theme_minimal()
+```
+
+5.  Crear visualizaciones que nos permitan evaluar los diferentes estados de tabaquismo (si fuma / no fuma) respecto al peso.
+
+En este apartado repetimos un diagrama de caja por estado de tabaquismo, el cual ya hemos observado y analizado anteriormente, así que vamos a centrar nuestro foco en el nuevo gráfico que se representa. El gráfico de violín.
+
+Nuevamente, este gráfico nos compara la distribución de los datos de los pesos de los recién nacidos de ambos grupos. Evidentemente, los resultados no van a variar ya que los datos son los mismos, pero vamos a indicar como observamos dichas evidencias en este nuevo gráfico. Como bien salta a la vista, en cuanto a la forma de ambos gráficos, el azul perteneciente a las no fumadoras presenta una mayor amplitud e uniformidad alrededor de los 3000 y 4000 gramos. En cambio, el rojo de las fumadoras presenta una forma más estreecha y desplazada hacia abajo con una mayor concentración de los datos entre los valores de 2500 y 3000 gramos. También podemos ver como las líneas más anchas del violín, que es el punto donde se concentra la mayoría de los datos es claramente más alta la del gráfico azul. Así como los extremos son más altos también en el gráfico azul y más anchos en esa región por lo que nos indica que hay más casos en dicho grupo dentro de ese rango de peso. Por último, la dispersión de los datos es mayor en el gráfico azul lo que representa dicha variabilidad mayor en este grupo, en cambio, en el gráfico rojo esta distribución es más compacta y se concentra en valores más bajos.
+
+```{r}
+
+# Crear visualizaciones adicionales para evaluar los diferentes estados de tabaquismo respecto al peso
+# Diagrama de caja por estado de tabaquismo
+ggplot(birthwt, aes(x = smoke, y = bwt, fill = smoke)) +
+  geom_boxplot(alpha = 0.7) +
+  scale_fill_manual(values = c("lightblue", "pink")) +
+  labs(
+    title = "Peso al Nacer según el Estado de Tabaquismo",
+    x = "Estado de Tabaquismo",
+    y = "Peso al Nacer (gramos)",
+    fill = "Estado de Tabaquismo"
+  ) +
+  theme_minimal()
+
+# Gráfico de violín por estado de tabaquismo
+ggplot(birthwt, aes(x = smoke, y = bwt, fill = smoke)) +
+  geom_violin(alpha = 0.7, trim = FALSE) +
+  scale_fill_manual(values = c("lightblue", "pink")) +
+  labs(
+    title = "Distribución del Peso al Nacer según el Estado de Tabaquismo",
+    x = "Estado de Tabaquismo",
+    y = "Peso al Nacer (gramos)",
+    fill = "Estado de Tabaquismo"
+  ) +
+  theme_minimal()
+
+
+
+```
+
+6.  Comprobar la normalidad de los datos, apoyándote en el test Shapiro. Comprobar la equidistribución de las poblaciones con el test de Wilcoxon.
+
+Con tal de evaluar la normalidad de los datos de ambas poblaciones, nos hemos apoyado del test Shapiro-Wilk el cual mide que tan bien se ajustan los datos a una distribución normal. Para ello, se plantean dos hipotesis: la primera, la hipotesis nula (H0) que afirma que los datos siguen una distribución normal; la segunda, la hipotesis alternativa (H1) que afirma que los datos no siguen una distribución normal. Este test nos devuelve dos estadísticos, el valor de W que mide la correlación entre los valores de los datos a comparar respecto a los de una distribución normal y, el p-valor que como en los otros tests es la probabilidad de obtener un resultado igual o más extremo del observado en los datos.
+
+Tanto para el grupo de la madres fumadoras como para el de las no fumadoras, observamos como el valor del estadístico W es muy cercano a 1 ya nos indica que los datos seguramente se van a distribuir de una forma normal, y así lo corrobora el p-valor el cual es mayor de 0,05. Por lo tanto, no rechazamos la hipótesis nula y podemos afirmar que los datos de ambos grupos siguen una distribución normal.
+
+Para la segunda parte de esta pregunta comprobamos la equidistribución de la poblaciones mediante el test de Wilcoxon. Dicho test compara ambas distribuciones sin asumir la normalidad de los datos, es decir es una prueba no paramétrica que compara las distribuciones entre dos grupos basandose en rangos y medianas en lugar de medias y varianzas. Para ello también se plantean dos hipótesis: la primera, la hipótesis nula (H0) que afirma que no hay diferencia en la localización entre ambas poblaciones; la segunda, la hipótesis altrenativa (H1) que afirma que existe una diferencia entre la localización entre las dos poblaciones. Este test también nos devuelve dos resultados claves, el estadístico W que mide la suma de los rangos asignados a los valores del grupo más pequeño de los dos y el p-valor que mide lo mismo que un t-test.
+
+En nuestro caso, el valor del estadístico W se aleja del valor esperado ya que se encuentra por encima de los 3000 y nos da señales que existirá una diferencia en la posición central de los datos. Evidencia corroborada por el valor de p, que es inferior a 0,05 y, por lo tanto, hay suficiente significación para rechazar la hipotesis nula y concluir que las distribuciones (o más bien los valores centrales de dichas distribuciones) son diferentes.
+
+```{r}
+
+# Separar los datos en fumadoras y no fumadoras
+smokers_normality <- subset(birthwt, smoke == "Fumadora")$bwt
+non_smokers_normality <- subset(birthwt, smoke == "No Fumadora")$bwt
+
+# Comprobar la normalidad de los datos con el test de Shapiro
+shapiro_smokers <- shapiro.test(smokers_normality)
+shapiro_non_smokers <- shapiro.test(non_smokers_normality)
+# Imprimir los resultados del test de Shapiro
+print(shapiro_smokers)
+print(shapiro_non_smokers)
+
+# Comprobar la equidistribución de las poblaciones con el test de Wilcoxon
+wilcoxon_test <- wilcox.test(smokers_normality, non_smokers_normality, alternative = "two.sided")
+# Imprimir los resultados del test de Wilcoxon
+print(wilcoxon_test)
+
+```
+
+7.  Realizar un test de ANOVA.
+
+El último test que realizamos es un test de ANOVA, o lo que es lo mismo, un análisis de la varianza. Dicha prueba estadística se utiliza para comparar las medias de dos o más grupos y determinar si existen diferencias significativas entre ellas. Dicha comparación se realiza analizando si la variabilidad entre las medias de los grupos es mayor que la variabilidad dentro de los grupos formulando dos hipotesis: la primera, hipótesis nula (H0) que afirma que las medias de los grupos son iguales; la segunda, hipótesis alternativa (H1) que afirma que almenos una de las medias es diferente. Los resultados que nos arroja este test son diferentes estadísticos, el valor de F mide la relación entre la variabilidad entre grupos y la variabilidad dentro de los grupos, cuanto más grande es dicho valor mayor es la variabilidad entre grupos. El valor de p mide la probabilidad del mismo modo que lo hace en los otros tests.
+
+Para nuestro caso, el valor del estadístico F es positivo y por lo tanto como bien hemos mencionado anteriomente la variabilidad entre grupos es más grande. El valor de p también es menor al valor de significación indicado en este caso por los dos asteriscos de 0,01. Lo que nos quiere decir que existe una evidencia suficiente como para rechazar la hipótesis nula (H0) y afirmar que existen diferencias significativas entre grupos y por lo tanto el estado de tabaquismo tiene un efecto significativo sobre el peso al nacer. También a través del valor estadístico F podemos explicar buena parte de la variabilidad entre grupos, o lo que es lo mismo, que el hecho de que la madre haya fumado a lo largo del embarazo es una de las variables más influyentes en el peso del recién nacido.
+
+```{r}
+
+# Realizar el test ANOVA
+anova_result <- aov(bwt ~ smoke, data = birthwt)
+
+# Imprimir los resultados del ANOVA
+cat("Resultados del ANOVA:\n")
+print(summary(anova_result))
+
+
+```
+
+8.  Concluir sobre la relación que tienen los hábitos de la madre y el peso del recién nacido.
+
+    Con los datos obtenidos de dicho análisis se pueden extraer unas conclusiones que ya hemos ido comentando a lo largo de este documento.
+
+La primera de las conclusiones es que no tenemos la evidencia suficiente como afirmar que la media de los recién nacidos de las madres fumadoras sea menor de 2500 gramos.
+
+La segunda, es que se puede afirmar que existen diferencias significativas entre ambos grupos analizados, el de madres no fumadoras y el de madres fumadoras.
+
+La tercera es que tanto en el grupo de las madres fumadoras como en el de las no fumadoras, los datos se ajustan a la normalidad.
+
+Por último mediante línea de código se compara los valores de los tests realizados con los que supuestamente se deberían obtener para aprobar o rechazar cada una de las hipótesis, y así mediante un output tomar la decisión adecuada.
+
+```{r}
+# Comprobación de normalidad
+
+if (shapiro_smokers$p.value < 0.05) {
+
+cat("\nLos datos de fumadoras NO siguen una distribución normal.\n")
+
+} else {
+
+cat("\nLos datos de fumadoras siguen una distribución normal.\n")
+
+}
+
+if (shapiro_non_smokers$p.value < 0.05) {
+
+cat("Los datos de no fumadoras NO siguen una distribución normal.\n")
+
+} else {
+
+cat("Los datos de no fumadoras siguen una distribución normal.\n")
+
+}
+
+# Comprobación de equidistribución
+
+if (wilcoxon_test$p.value < 0.05) {
+
+cat("\nRechazamos la hipótesis nula: Las distribuciones de las dos poblaciones son
+
+significativamente diferentes.\n")
+
+} else {
+
+cat("\nNo se rechaza la hipótesis nula: No hay evidencia suficiente para concluir que las
+
+distribuciones sean diferentes.\n")
+
+}
+
+# ANOVA
+
+anova_summary <- summary(anova_result)
+
+p_value <- anova_summary[[1]][["Pr(>F)"]][1]
+
+# Interpretar el resultado del ANOVA
+
+cat("\nInterpretación del ANOVA:\n")
+
+if (p_value < 0.05) {
+
+cat("El p-valor es", round(p_value, 4), ", que es menor a 0.05.\n")
+
+cat("Rechazamos la hipótesis nula: Existe una diferencia significativa en el peso al nacer
+
+entre fumadoras y no fumadoras.\n")
+
+} else {
+
+cat("El p-valor es", round(p_value, 4), ", que es mayor o igual a 0.05.\n")
+
+cat("No se rechaza la hipótesis nula: No hay evidencia suficiente para afirmar que exista
+
+una diferencia significativa en el peso al nacer entre fumadoras y no fumadoras.\n")
+
+}
+```
